@@ -6,7 +6,11 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_opengl.h>
 
+#include "rigid_quad_2d.hpp"
+
 using namespace std::chrono;
+
+void draw_quad ( const rigid_quad_2d& quad );
 
 class app {
 public:
@@ -24,13 +28,30 @@ private:
 
 	SDL_Window* m_window;
 	SDL_GLContext m_gl_context;
+
+	bool m_left_key_down;
+	bool m_right_key_down;
+	bool m_forward_key_down;
+	bool m_backward_key_down;
+
+	rigid_quad_2d m_player;
+	rigid_quad_2d m_attach;
 };
 
 app::app ( const std::string& window_title,
 		   int window_width,
-	       int window_height )
+	       int window_height ) :
+	m_left_key_down { false },
+	m_right_key_down { false },
+	m_forward_key_down { false },
+	m_backward_key_down { false },
+	m_player { vec2 { 0.0f, 0.0f },
+		       0.15f, 0.2f,
+		       0.2f, 0.0f },
+    m_attach { vec2 { 0.0f, 0.0f },
+	           0.05f, 0.1f,
+	           0.1f, 0.0f }
 {
-
 	if ( SDL_Init ( SDL_INIT_EVERYTHING ) ) {
 		throw std::runtime_error ( std::string( "SDL_Init() failed: " ) + SDL_GetError() );
 	}
@@ -98,11 +119,42 @@ void app::run ( )
             if ( sdl_event.type == SDL_QUIT ) {
                 done = true;
                 break;
-            }
-            else if ( sdl_event.type == SDL_KEYDOWN ) {
-                if ( sdl_event.key.keysym.sym == SDLK_ESCAPE) {
-                    done = true;
-                    break;
+            }else if ( sdl_event.type == SDL_KEYDOWN ) {
+                switch ( sdl_event.key.keysym.sym ) {
+                	case SDLK_ESCAPE:
+                		done = true;
+                		break;
+                	case SDLK_w:
+                		m_forward_key_down = true;
+                		break;
+            		case SDLK_s:
+                		m_backward_key_down = true;
+                		break;
+                    case SDLK_a:
+                		m_left_key_down = true;
+                		break;
+                	case SDLK_d:
+                		m_right_key_down = true;
+                		break;
+                	default:
+                	    break;
+                }
+            }else if ( sdl_event.type == SDL_KEYUP ) {
+                switch ( sdl_event.key.keysym.sym ) {
+                	case SDLK_w:
+                		m_forward_key_down = false;
+                		break;
+            		case SDLK_s:
+                		m_backward_key_down = false;
+                		break;
+                    case SDLK_a:
+                		m_left_key_down = false;
+                		break;
+                	case SDLK_d:
+                		m_right_key_down = false;
+                		break;
+                	default:
+                	    break;
                 }
             }
         }
@@ -119,7 +171,39 @@ void app::run ( )
 
 void app::update ( float dt )
 {
-	dt += 0.01f;
+	vec2 force;
+
+	if ( m_left_key_down ) {
+		force += vec2 { -1.0f, 0.0f };
+	}
+
+	if ( m_right_key_down ) {
+		force += vec2 { 1.0f, 0.0f };
+	}
+
+	if ( m_forward_key_down ) {
+		force += vec2 { 0.0f, 1.0f };
+	}
+
+	if ( m_backward_key_down ) {
+		force += vec2 { 0.0f, -1.0f };
+	}
+
+	m_player.force ( force );
+
+	vec2 rope = m_player.center() - m_attach.center();
+
+	if ( rope.mag ( ) > 0.3f ) {
+		vec2 rope_negation = rope;
+		rope_negation.normalize();
+		rope_negation *= 0.3f;
+		rope -= rope_negation;
+
+		m_attach.force ( rope, m_attach.corner(0) );
+	}
+
+	m_player.update ( dt, 0.1f );
+	m_attach.update ( dt, 0.1f );
 }
 
 void app::render ( )
@@ -128,10 +212,25 @@ void app::render ( )
 
 	glColor3f ( 1.0f, 1.0f, 1.0f );
 
-	glVertex3f ( 0.0f, 0.0f, 0.0f );
-	glVertex3f ( 0.5f, 0.5f, 0.0f );
+	draw_quad ( m_player );
+	draw_quad ( m_attach );
+
+	glColor3f ( 1.0f, 0.0f, 0.0f );
+
+	glVertex3f ( m_player.center().x(), m_player.center().y(), 0.0f );
+	glVertex3f ( m_attach.corner(0).x(), m_attach.corner(0).y(), 0.0f );
 
 	glEnd ( );
+}
+
+void draw_quad ( const rigid_quad_2d& quad )
+{
+	for ( unsigned int i = 0; i < rigid_quad_2d::k_num_corners; ++i ) {
+		unsigned int next = ( i + 1 ) % rigid_quad_2d::k_num_corners;
+
+		glVertex3f ( quad.corner(i).x(), quad.corner(i).y(), 0.0f );
+		glVertex3f ( quad.corner(next).x(), quad.corner(next).y(), 0.0f );
+	}
 }
 
 int main ( int argc, char** argv ) {

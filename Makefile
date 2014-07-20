@@ -7,7 +7,8 @@ LINK   = -lSDL2 -lGL
 EXE    = rigid_body_2d
 
 # compiled objects
-OBJS  = main.o
+OBJS  = rigid_quad_2d.o
+OBJS += main.o
 
 all: release
 
