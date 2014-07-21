@@ -23,7 +23,6 @@ public:
     // the direction of the normal using the coefficient of restitution
     void impulse ( const vec2& point,
                    const vec2& normal,
-                   float restitution,
                    const vec2& collider_force );
 
 	// update the object over time, decaying the force

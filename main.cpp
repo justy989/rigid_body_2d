@@ -199,8 +199,6 @@ void app::update ( float dt )
 		force += vec2 { 0.0f, -1.0f };
 	}
 
-    float time_step = dt / 10.0f;
-
     m_player.force ( force );
 
     vec2 rope = m_player.corner ( 0 ) - m_attach.corner ( 0 );
@@ -222,14 +220,8 @@ void app::update ( float dt )
 
     rigid_quad_2d::intersect ( m_player, m_attach, res );
 
-
     if( res.collided ) {
-        // resolve
         m_collided = true;
-
-        //vec2 player_force = m_player.total_force ();
-        //m_player.impulse ( res.point, res.normal, 1.0f, m_attach.total_force ( ) );
-        //m_attach.impulse ( res.point, -res.normal, 1.0f, player_force );
     }
     else{
         m_collided = false;

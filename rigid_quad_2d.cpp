@@ -43,7 +43,6 @@ void rigid_quad_2d::force ( const vec2& force,
 
 void rigid_quad_2d::impulse ( const vec2& point,
                               const vec2& normal,
-                              float restitution,
                               const vec2& collider_force )
 {
     vec2 force = normal + normal.dot ( collider_force );
