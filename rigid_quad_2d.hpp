@@ -32,6 +32,7 @@ public:
     struct collision_results {
         bool collided;
         vec2 point;
+        vec2 normal;
     };
 
     static void collision ( const rigid_quad_2d& a,
@@ -57,7 +58,8 @@ private:
 	void update_corners ();
 
     static bool is_point_inside_quad ( const vec2& p,
-                                       const rigid_quad_2d& quad );
+                                       const rigid_quad_2d& quad,
+                                       vec2& collision_normal );
 
 private:
 

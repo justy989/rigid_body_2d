@@ -94,16 +94,22 @@ void rigid_quad_2d::collision ( const rigid_quad_2d& a,
     // for each corner, test if it is inside the other shape
     for ( unsigned int i = 0; i < k_num_corners; ++i ) {
         if ( is_point_inside_quad ( a.m_corners[i],
-                                    b ) ) {
+                                    b,
+                                    res.normal ) ) {
             res.collided = true;
-            res.point = a.m_corners[i];
+            res.point = a.m_corners [ i ];
+            res.normal.normalize ( );
+            res.normal.negate ( );
             return;
         }
 
         if ( is_point_inside_quad ( b.m_corners[i],
-                                    a ) ) {
+                                    a,
+                                    res.normal ) ) {
             res.collided = true;
-            res.point = b.m_corners[i];
+            res.point = b.m_corners [ i ];
+            res.normal.normalize ( );
+            res.normal.negate ( );
             return;
         }
     }
@@ -112,8 +118,16 @@ void rigid_quad_2d::collision ( const rigid_quad_2d& a,
 }
 
 bool rigid_quad_2d::is_point_inside_quad ( const vec2& p,
-                                           const rigid_quad_2d& quad )
+                                           const rigid_quad_2d& quad,
+                                           vec2& collision_normal )
 {
+    vec2 edge;
+    vec2 trans_p;
+    vec2 closest_normal;
+    vec2 edge_proj;
+    vec2 normal;
+    float closest_normal_dist = std::numeric_limits<float>::max();
+
     // build each edge
     for ( unsigned int i = 0; i < k_num_corners; ++i ) {
         unsigned int next = ( i + 1 ) % k_num_corners;
@@ -121,15 +135,34 @@ bool rigid_quad_2d::is_point_inside_quad ( const vec2& p,
         // A = -(y2 - y1)
         // B = x2 - x1
         // C = -(A * x1 + B * y1)
-        float a = -( quad.m_corners[next].y ( ) - quad.m_corners[i].y ( ) );
-        float b = quad.m_corners[next].x ( ) - quad.m_corners[i].x ( );
-        float c = -( a * quad.m_corners[i].x ( ) + b * quad.m_corners[next].y ( ) );
+        const vec2& first = quad.m_corners [ i ];
+        const vec2& second = quad.m_corners [ next ];
+
+        float a = -( second.y ( ) - first.y ( ) );
+        float b = second.x ( ) - first.x ( );
+        float c = -( a * first.x ( ) + b * first.y ( ) );
 
         // D = A * xp + B * yp + C
         float d = a * p.x ( ) + b * p.y ( ) + c;
 
         if ( d < 0.0f ) {
             return false;
+        }
+
+        // find the edge vector
+        edge = quad.m_corners [ next ] - quad.m_corners [ i ];
+
+        // project the point onto the edge
+        trans_p = quad.m_corners [ next ] - p;
+        edge_proj = trans_p.project_onto ( edge );
+        normal = edge_proj - trans_p;
+
+        d = normal.mag ( );
+
+        // find the distance from p to that projected point
+        if ( d < closest_normal_dist ) {
+            closest_normal_dist = d;
+            collision_normal = normal;
         }
     }
 

@@ -31,8 +31,10 @@ public:
     T mag ( ) const;
     T dot ( const vector2<T>& v ) const;
     T perp_dot ( const vector2<T>& v ) const;
+
     float distance_to ( const vector2<T>& v ) const;
-    float cross ( const vector2<T>& v ) const;
+
+    vector2<T> project_onto ( const vector2<T>& v ) const;
 
     void perp ( );
     void normalize ( );
@@ -164,6 +166,17 @@ inline float vector2<T>::distance_to ( const vector2<T>& v ) const
 }
 
 template < typename T >
+inline vector2<T> vector2<T>::project_onto ( const vector2<T>& v ) const
+{
+    float v_mag = v.mag ( );
+
+    float num = dot ( v );
+    float denum = v_mag * v_mag;
+
+    return v * ( num / denum );
+}
+
+template < typename T >
 inline void vector2<T>::perp ()
 {
     T tmp = m_x;
@@ -200,12 +213,6 @@ inline void vector2<T>::negate ()
 {
     m_x = -m_x;
     m_y = -m_y;
-}
-
-template < typename T >
-inline float vector2<T>::cross ( const vector2<T>& v ) const
-{
-    return  m_x * v.m_y - m_y * v.m_x;
 }
 
 using vec2 = vector2<float>;

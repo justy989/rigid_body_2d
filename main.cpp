@@ -42,6 +42,7 @@ private:
     rigid_quad_2d m_obj;
 
     vec2 m_collided_point;
+    vec2 m_collided_normal;
 };
 
 app::app ( const std::string& window_title,
@@ -225,6 +226,7 @@ void app::update ( float dt )
     if( res.collided ) {
         m_collided = true;
         m_collided_point = res.point;
+        m_collided_normal = res.normal;
     }
     else{
         m_collided = false;
@@ -257,6 +259,13 @@ void app::render ( )
 
         glVertex3f ( m_collided_point.x(), m_collided_point.y() - 0.1f, 0.0f );
         glVertex3f ( m_collided_point.x(), m_collided_point.y() + 0.1f, 0.0f );
+
+        glColor3f ( 0.0f, 1.0f, 0.0f );
+
+        glVertex3f ( m_collided_point.x(), m_collided_point.y(), 0.0f );
+        glVertex3f ( m_collided_point.x() + m_collided_normal.x() * 0.15f,
+                     m_collided_point.y() + m_collided_normal.y() * 0.15f,
+                     0.0f );
     }
 
 	glEnd ( );
