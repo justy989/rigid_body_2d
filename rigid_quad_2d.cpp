@@ -87,75 +87,52 @@ void rigid_quad_2d::update_corners ()
 	}
 }
 
-void rigid_quad_2d::intersect ( const rigid_quad_2d& a,
+void rigid_quad_2d::collision ( const rigid_quad_2d& a,
                                 const rigid_quad_2d& b,
                                 collision_results& res )
 {
-    struct projection{
-        float min;
-        float max;
-    };
-
-    float min_overlap = std::numeric_limits<float>::max ();
-    vec2 edge;
-
-    for( unsigned int i = 0; i < k_num_corners; ++i ) {
-        unsigned int p = i % (k_num_corners / 2);
-        unsigned int next = ( p + 1 );
-
-        if( i < (k_num_corners / 2) ) {
-            edge = a.corner ( p ) - a.corner ( next );
-        }
-        else {
-            edge = b.corner ( p ) - b.corner ( next );
-        }
-
-        projection proj_a, proj_b;
-
-        proj_a.min = a.corner ( 0 ).dot ( edge );
-        proj_b.min = b.corner ( 0 ).dot ( edge );
-
-        proj_a.max = proj_a.min;
-        proj_b.max = proj_b.min;
-
-        for ( unsigned int c = 1; c < k_num_corners; ++c ) {
-            float a_dot = a.corner ( c ).dot ( edge );
-            float b_dot = b.corner ( c ).dot ( edge );
-
-            if ( a_dot < proj_a.min ){
-                proj_a.min = a_dot;
-            }
-
-            if ( b_dot < proj_b.min ){
-                proj_b.min = b_dot;
-            }
-
-            if ( a_dot > proj_a.max ){
-                proj_a.max = a_dot;
-            }
-
-            if ( b_dot > proj_b.max ){
-                proj_b.max = b_dot;
-            }
-        }
-
-        // exit early on no overlap
-        if ( proj_a.max < proj_b.min ||
-             proj_a.min > proj_b.max ) {
-            res.collided = false;
+    // for each corner, test if it is inside the other shape
+    for ( unsigned int i = 0; i < k_num_corners; ++i ) {
+        if ( is_point_inside_quad ( a.m_corners[i],
+                                    b ) ) {
+            res.collided = true;
+            res.point = a.m_corners[i];
             return;
         }
 
-        // find the smallest overlap
-        float overlap = proj_a.max > proj_b.min ? 
-                        proj_a.max - proj_b.min : 
-                        proj_b.max - proj_a.min;
-
-        if ( overlap < min_overlap ) {
-            res.normal = edge;
-            res.normal.perp ( );
+        if ( is_point_inside_quad ( b.m_corners[i],
+                                    a ) ) {
+            res.collided = true;
+            res.point = b.m_corners[i];
+            return;
         }
     }
 
-    res.collided = true;
+    res.collided = false;
 }
+
+bool rigid_quad_2d::is_point_inside_quad ( const vec2& p,
+                                           const rigid_quad_2d& quad )
+{
+    // build each edge
+    for ( unsigned int i = 0; i < k_num_corners; ++i ) {
+        unsigned int next = ( i + 1 ) % k_num_corners;
+
+        // A = -(y2 - y1)
+        // B = x2 - x1
+        // C = -(A * x1 + B * y1)
+        float a = -( quad.m_corners[next].y ( ) - quad.m_corners[i].y ( ) );
+        float b = quad.m_corners[next].x ( ) - quad.m_corners[i].x ( );
+        float c = -( a * quad.m_corners[i].x ( ) + b * quad.m_corners[next].y ( ) );
+
+        // D = A * xp + B * yp + C
+        float d = a * p.x ( ) + b * p.y ( ) + c;
+
+        if ( d < 0.0f ) {
+            return false;
+        }
+    }
+
+    return true;
+}
+

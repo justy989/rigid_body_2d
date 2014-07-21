@@ -40,6 +40,8 @@ private:
 	rigid_quad_2d m_attach;
 
     rigid_quad_2d m_obj;
+
+    vec2 m_collided_point;
 };
 
 app::app ( const std::string& window_title,
@@ -218,10 +220,11 @@ void app::update ( float dt )
     m_attach.update ( dt, friction );
     m_obj.update ( dt, friction );
 
-    rigid_quad_2d::intersect ( m_player, m_attach, res );
+    rigid_quad_2d::collision ( m_player, m_attach, res );
 
     if( res.collided ) {
         m_collided = true;
+        m_collided_point = res.point;
     }
     else{
         m_collided = false;
@@ -247,6 +250,14 @@ void app::render ( )
 
     glVertex3f ( m_player.corner ( 0 ).x(), m_player.corner ( 0 ).y(), 0.0f );
 	glVertex3f ( m_attach.corner ( 0 ).x(), m_attach.corner ( 0 ).y(), 0.0f );
+
+    if ( m_collided ) {
+        glVertex3f ( m_collided_point.x() - 0.1f, m_collided_point.y(), 0.0f );
+        glVertex3f ( m_collided_point.x() + 0.1f, m_collided_point.y(), 0.0f );
+
+        glVertex3f ( m_collided_point.x(), m_collided_point.y() - 0.1f, 0.0f );
+        glVertex3f ( m_collided_point.x(), m_collided_point.y() + 0.1f, 0.0f );
+    }
 
 	glEnd ( );
 }
