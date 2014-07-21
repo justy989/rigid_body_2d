@@ -19,10 +19,26 @@ public:
 	void force ( const vec2& force,
 			     const vec2& point );
 
+    // used in collision resolution, impulse the force and torque in
+    // the direction of the normal using the coefficient of restitution
+    void impulse ( const vec2& point,
+                   const vec2& normal,
+                   float restitution,
+                   const vec2& collider_force );
+
 	// update the object over time, decaying the force
 	// and torque with friction
 	void update ( float dt, float friction );
+    
+    struct collision_results {
+        bool collided;
+        vec2 point;
+        vec2 normal;
+    };
 
+    static void intersect ( const rigid_quad_2d& a,
+                            const rigid_quad_2d& b,
+                            collision_results& res );
 
 	static const unsigned int k_num_corners = 4;
 

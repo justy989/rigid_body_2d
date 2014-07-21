@@ -34,8 +34,12 @@ private:
 	bool m_forward_key_down;
 	bool m_backward_key_down;
 
+    bool m_collided;
+
 	rigid_quad_2d m_player;
 	rigid_quad_2d m_attach;
+
+    rigid_quad_2d m_obj;
 };
 
 app::app ( const std::string& window_title,
@@ -45,12 +49,16 @@ app::app ( const std::string& window_title,
 	m_right_key_down { false },
 	m_forward_key_down { false },
 	m_backward_key_down { false },
+    m_collided { false },
 	m_player { vec2 { 0.0f, 0.0f },
 		       0.15f, 0.2f,
 		       0.2f, 0.0f },
-    m_attach { vec2 { 0.0f, 0.0f },
+    m_attach { vec2 { 0.15f, 0.2f },
 	           0.05f, 0.1f,
-	           0.1f, 0.0f }
+	           0.07f, 0.0f },
+    m_obj { vec2{ -0.3f, -0.3f },
+            0.2f, 0.3f,
+            0.3f, 0.0f }
 {
 	if ( SDL_Init ( SDL_INIT_EVERYTHING ) ) {
 		throw std::runtime_error ( std::string( "SDL_Init() failed: " ) + SDL_GetError() );
@@ -171,6 +179,8 @@ void app::run ( )
 
 void app::update ( float dt )
 {
+    rigid_quad_2d::collision_results res;
+
 	vec2 force;
 
 	if ( m_left_key_down ) {
@@ -189,36 +199,62 @@ void app::update ( float dt )
 		force += vec2 { 0.0f, -1.0f };
 	}
 
-	m_player.force ( force );
+    float time_step = dt / 10.0f;
 
-	vec2 rope = m_player.center() - m_attach.center();
+    m_player.force ( force );
 
-	if ( rope.mag ( ) > 0.3f ) {
-		vec2 rope_negation = rope;
-		rope_negation.normalize();
-		rope_negation *= 0.3f;
-		rope -= rope_negation;
+    vec2 rope = m_player.corner ( 0 ) - m_attach.corner ( 0 );
 
-		m_attach.force ( rope, m_attach.corner(0) );
-	}
+    if( rope.mag () > 0.1f ) {
+        vec2 rope_negation = rope;
+        rope_negation.normalize ();
+        rope_negation *= 0.1f;
+        rope -= rope_negation;
 
-	m_player.update ( dt, 0.1f );
-	m_attach.update ( dt, 0.1f );
+        m_attach.force ( rope, m_attach.corner ( 0 ) );
+    }
+
+    float friction = 0.1f;
+
+    m_player.update ( dt, friction );
+    m_attach.update ( dt, friction );
+    m_obj.update ( dt, friction );
+
+    rigid_quad_2d::intersect ( m_player, m_attach, res );
+
+
+    if( res.collided ) {
+        // resolve
+        m_collided = true;
+
+        //vec2 player_force = m_player.total_force ();
+        //m_player.impulse ( res.point, res.normal, 1.0f, m_attach.total_force ( ) );
+        //m_attach.impulse ( res.point, -res.normal, 1.0f, player_force );
+    }
+    else{
+        m_collided = false;
+    }
 }
 
 void app::render ( )
 {
 	glBegin ( GL_LINES );
 
-	glColor3f ( 1.0f, 1.0f, 1.0f );
+    if( m_collided ){
+        glColor3f ( 0.0f, 1.0f, 1.0f );
+    }
+    else{
+        glColor3f ( 1.0f, 1.0f, 1.0f );
+    }
 
 	draw_quad ( m_player );
-	draw_quad ( m_attach );
+    draw_quad ( m_attach );
+    draw_quad ( m_obj );
 
 	glColor3f ( 1.0f, 0.0f, 0.0f );
 
-	glVertex3f ( m_player.center().x(), m_player.center().y(), 0.0f );
-	glVertex3f ( m_attach.corner(0).x(), m_attach.corner(0).y(), 0.0f );
+    glVertex3f ( m_player.corner ( 0 ).x(), m_player.corner ( 0 ).y(), 0.0f );
+	glVertex3f ( m_attach.corner ( 0 ).x(), m_attach.corner ( 0 ).y(), 0.0f );
 
 	glEnd ( );
 }

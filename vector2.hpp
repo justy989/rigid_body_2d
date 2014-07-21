@@ -32,9 +32,12 @@ public:
     T dot ( const vector2<T>& v ) const;
     T perp_dot ( const vector2<T>& v ) const;
     float distance_to ( const vector2<T>& v ) const;
+    float cross ( const vector2<T>& v ) const;
 
+    void perp ( );
     void normalize ( );
     void zero ( );
+    void negate ( );
 
     // accessors
     T x ( ) const { return m_x; }
@@ -47,7 +50,6 @@ public:
 private:
     T m_x;
     T m_y;
-    T m_z;
 };
 
 template < typename T >
@@ -162,6 +164,14 @@ inline float vector2<T>::distance_to ( const vector2<T>& v ) const
 }
 
 template < typename T >
+inline void vector2<T>::perp ()
+{
+    T tmp = m_x;
+    m_x = -m_y;
+    m_y = tmp;
+}
+
+template < typename T >
 inline void vector2<T>::normalize ( )
 {
     float m = mag ( );
@@ -169,7 +179,6 @@ inline void vector2<T>::normalize ( )
     if( static_cast<float>(fabs(m)) < std::numeric_limits<float>::epsilon() ) {
         m_x = 0.0f;
         m_y = 0.0f;
-        m_z = 0.0f;
         return;
     }
 
@@ -177,7 +186,6 @@ inline void vector2<T>::normalize ( )
 
     m_x *= d;
     m_y *= d;
-    m_z *= d;
 }
 
 template < typename T >
@@ -185,7 +193,19 @@ inline void vector2<T>::zero ( )
 {
     m_x = 0.0;
     m_y = 0.0;
-    m_z = 0.0;
+}
+
+template < typename T >
+inline void vector2<T>::negate ()
+{
+    m_x = -m_x;
+    m_y = -m_y;
+}
+
+template < typename T >
+inline float vector2<T>::cross ( const vector2<T>& v ) const
+{
+    return  m_x * v.m_y - m_y * v.m_x;
 }
 
 using vec2 = vector2<float>;
