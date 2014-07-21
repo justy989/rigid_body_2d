@@ -12,18 +12,18 @@ public:
 			        float roation = 0.0f );
 
 
-	// apply a force evenly to the center of mass
-	void force ( const vec2& force );
+	void push ( const vec2& force );
+    void pull ( const vec2& force );
 
-	// apply a force on a point relative to the object
-	void force ( const vec2& force,
-			     const vec2& point );
+	void push ( const vec2& force,
+		        const vec2& point );
+	void pull ( const vec2& force,
+		        const vec2& point );
 
     // used in collision resolution, impulse the force and torque in
     // the direction of the normal using the coefficient of restitution
-    void impulse ( const vec2& point,
-                   const vec2& normal,
-                   const vec2& collider_force );
+    void impulse ( float impulse,
+                   const vec2& normal );
 
 	// update the object over time, decaying the force
 	// and torque with friction
@@ -45,6 +45,7 @@ public:
 	inline float height ( ) const;
 
 	inline float mass ( ) const;
+    inline float inv_mass ( ) const;
 	inline float inertia ( ) const;
 	inline float rotation ( ) const;
 
@@ -76,6 +77,9 @@ private:
 
 	float m_rotation;
 
+    vec2 m_velocity;
+    float m_angular_velocity;
+
 	vec2 m_total_force;
 	float m_total_torque;
 
@@ -87,6 +91,7 @@ inline float rigid_quad_2d::width ( ) const { return m_width; }
 inline float rigid_quad_2d::height ( ) const { return m_height; }
 
 inline float rigid_quad_2d::mass ( ) const { return m_mass; }
+inline float rigid_quad_2d::inv_mass ( ) const { return m_inv_mass; }
 inline float rigid_quad_2d::inertia ( ) const { return m_inertia; }
 inline float rigid_quad_2d::rotation ( ) const { return m_rotation; }
 

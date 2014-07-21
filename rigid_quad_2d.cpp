@@ -17,6 +17,7 @@ rigid_quad_2d::rigid_quad_2d ( const vec2& center,
 	m_inertia { 0.0f },
 	m_inv_inertia { 0.0f },
 	m_rotation { rotation },
+    m_angular_velocity { 0.0f },
 	m_total_torque { 0.0f },
 	m_center { center }
 {
@@ -29,35 +30,45 @@ rigid_quad_2d::rigid_quad_2d ( const vec2& center,
 	update_corners ( );
 }
 
-void rigid_quad_2d::force ( const vec2& force )
+void rigid_quad_2d::push ( const vec2& force )
 {
 	m_total_force += force;
 }
 
-void rigid_quad_2d::force ( const vec2& force,
+void rigid_quad_2d::pull ( const vec2& force )
+{
+	m_total_force -= force;
+}
+
+void rigid_quad_2d::push ( const vec2& force,
                             const vec2& point )
 {
 	m_total_force += force;
-	m_total_torque += ( force.mag ( ) * m_center.perp_dot ( -point ) );
+	m_total_torque += ( force.mag ( ) * m_center.perp_dot ( point ) );
 }
 
-void rigid_quad_2d::impulse ( const vec2& point,
-                              const vec2& normal,
-                              const vec2& collider_force )
+void rigid_quad_2d::pull ( const vec2& force,
+                            const vec2& point )
 {
-    vec2 force = normal + normal.dot ( collider_force );
-    m_total_force += force;
+	m_total_force -= force;
+	m_total_torque -= ( force.mag ( ) * m_center.perp_dot ( point ) );
+}
 
-    m_total_torque += (force.mag () * m_center.perp_dot ( -point ));
+void rigid_quad_2d::impulse ( float impulse,
+                              const vec2& normal )
+{
+    m_velocity += ( normal * ( impulse / m_mass ) );
 }
 
 void rigid_quad_2d::update ( float dt, float friction )
 {
 	// F = ma, a = dv/dt, v = dc/dt, c = c0 + F / m * dt ^ 2
-    m_center += (m_total_force * m_inv_mass) * dt * dt;
+    m_center += m_velocity * dt;
+    m_velocity = ( m_total_force * m_inv_mass ) * dt; 
 
 	// T = wI, w = do/dt, o = dr/dt, r = r0 + T / I * dt ^ 2
-    m_rotation += (m_total_torque * m_inv_inertia) * dt * dt;
+    m_rotation += m_angular_velocity * dt;
+    m_angular_velocity = ( m_total_torque * m_inv_inertia ) * dt;
 
 	update_corners ( );
 

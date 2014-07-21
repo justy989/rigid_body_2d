@@ -4,7 +4,7 @@
 CC     = g++
 CFLAGS = -std=c++11 -Wall -Wextra -Werror
 LINK   = -lSDL2 -lGL
-EXE    = rigid_body_2d
+EXE    = rigid_quads
 
 # compiled objects
 OBJS  = rigid_quad_2d.o

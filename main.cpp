@@ -202,17 +202,18 @@ void app::update ( float dt )
 		force += vec2 { 0.0f, -1.0f };
 	}
 
-    m_player.force ( force );
+    m_player.push ( force );
 
     vec2 rope = m_player.corner ( 0 ) - m_attach.corner ( 0 );
 
-    if( rope.mag () > 0.1f ) {
+    if( rope.mag () > 0.15f ) {
         vec2 rope_negation = rope;
         rope_negation.normalize ();
         rope_negation *= 0.1f;
         rope -= rope_negation;
 
-        m_attach.force ( rope, m_attach.corner ( 0 ) );
+        m_attach.pull ( -rope, m_attach.corner ( 0 ) );
+        m_player.push ( -rope, m_player.corner ( 0 ) );
     }
 
     float friction = 0.1f;
@@ -227,6 +228,17 @@ void app::update ( float dt )
         m_collided = true;
         m_collided_point = res.point;
         m_collided_normal = res.normal;
+
+        // vec2 pp = res.point - m_player.center ( );
+        // vec2 ap = res.point - m_attach.center ( );
+
+        // float j_num = ( pp - ap ).dot ( res.normal ) * -( 1.0f + 0.5f );
+        // float j_denum = res.normal.dot ( res.normal * ( m_player.inv_mass() + m_attach.inv_mass() ) );
+        
+        // float j = j_num / j_denum;
+
+        // m_player.impulse ( j, res.normal );
+        // m_attach.impulse ( j, -res.normal );
     }
     else{
         m_collided = false;
